@@ -41,7 +41,8 @@ function fixture() {
     require(name) {
       if(name==='obsidian')return obsidian;
       if(name==='handsontable')return {default:Table};
-      if(name==='papaparse'||name.endsWith('.css')||name.endsWith('.scss'))return {};
+      if(name==='papaparse')return require('papaparse');
+      if(name.endsWith('.css')||name.endsWith('.scss'))return {};
       throw Error('Unexpected dependency '+name);
     }
   },{filename:'csv-view.js'});
@@ -75,4 +76,17 @@ test('table mutation and sort hooks request saves on the CSV view',()=>{
   assert.equal(view.saves,hooks.length);
   view.hotChange([], 'edit');
   assert.equal(view.saves,hooks.length+1);
+});
+
+
+test('serialization preserves hidden source rows and CSV quoting after sorting/filtering',()=>{
+  const f=fixture(),view=f.plugin.csvViewCreator({});
+  const rows=[['Zoe','30'],['Beatriz, "B"','2'],['Luis','10']];
+  view.hot.getSourceDataArray=()=>rows.map(row=>row.slice());
+  view.hot.getData=()=>[['Luis','10']];
+  view.hot.getColHeader=()=>['Nombre','Edad'];
+  view.hotSettings.colHeaders=['Nombre','Edad'];
+  const csv=view.getViewData();
+  assert.deepEqual(require('papaparse').parse(csv).data,[['Nombre','Edad'],...rows]);
+  assert.equal(view.getViewData(),csv,'repeated saves must not duplicate headers');
 });

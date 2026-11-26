@@ -42,7 +42,7 @@ class CsvView extends TextFileView {
   hot: Handsontable;
   hotSettings: Handsontable.GridSettings;
   hotExport: Handsontable.plugins.ExportFile;
-  hotState: Handsontable.plugins.PersistenState;
+  hotState: Handsontable.plugins.PersistentState;
   hotFilters: Handsontable.plugins.Filters;
   loadingBar: HTMLElement;
 
@@ -89,8 +89,7 @@ class CsvView extends TextFileView {
     menuContainer.classList.add('csv-editor-menus');
     document.body.appendChild(menuContainer);
     this.register(() => menuContainer.remove());
-    // Handsontable 8 supports uiContainer, but its bundled types omit it.
-    const menuOptions = { uiContainer: menuContainer } as unknown as Handsontable.contextMenu.Settings;
+    const menuOptions = { uiContainer: menuContainer };
 
     this.hotSettings = {
       afterChange: this.hotChange,
@@ -129,7 +128,8 @@ class CsvView extends TextFileView {
       persistentState: true,
       // preventOverflow: true,
       search: true, // TODO:290 Hijack the search ui from markdown views,
-      height: '100%',
+      // A numeric viewport avoids collapsed percentage heights in flex panes.
+      height: () => tableContainer.clientHeight,
       width: '100%',
     }
     this.hot = new Handsontable(hotContainer, this.hotSettings);

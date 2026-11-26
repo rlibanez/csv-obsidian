@@ -39,8 +39,11 @@ The repo depends on the latest [plugin API](https://github.com/obsidianmd/obsidi
 If you want to contribute to development and/or just customize it with your own
 tweaks, you can do the following:
 - Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run build` to compile.
+- Use Node.js 22 or newer.
+- `npm ci --ignore-scripts` to install the exact dependencies from `package-lock.json`
+- `npm run typecheck` and `npm test` to check types and run regression tests.
+- `npm run build` to generate `main.js` and `styles.css` in the project root.
+- `npm audit` to check the dependency tree for known vulnerabilities.
 - Copy `manifest.json`, `main.js` and `styles.css` to a subfolder of your plugins
 folder (e.g, `<vault>/.obsidian/plugins/<plugin-name>/`)
 - Reload obsidian to see changes
@@ -59,3 +62,18 @@ much, feel free to throw some coins in my hat via
 # Version History
 ## 0.0.1
 Initial release of csv-obsidian! See [Features](#Features) above
+
+## Dependency maintenance
+
+The lockfile is committed so local builds and CI use the same dependency versions.
+Installation lifecycle scripts are not required to build the plugin.
+
+Styles are compiled with Dart Sass's modern API through the Rollup configuration;
+`node-sass` and the legacy Sass adapter are no longer used. Watch mode also tracks
+stylesheets loaded by Sass.
+
+Handsontable is kept on 16.2 to preserve the existing PersistentState integration.
+The scoped npm override selects Moment 2.31.0 instead of Handsontable's pinned
+2.30.1 to address GHSA-4p3w-j4w9-5jqw. Remove that override once the selected
+Handsontable version uses a patched Moment release. This does not change
+Handsontable's existing license requirements.
