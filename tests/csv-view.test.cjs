@@ -6,31 +6,41 @@ const ts = require('typescript');
 
 function fixture() {
   const rendered = [];
+  const state = new Map();
   const element = () => ({innerHTML:'',classList:{add(){}},addClass(){},appendChild(){}});
   class TextFileView {
     constructor(leaf) {this.leaf=leaf;this.contentEl=element();this.saves=0;}
     register() {}
+    onPaneMenu(menu,source) {menu.nativeSource=source;}
     requestSave() {assert.ok(this instanceof TextFileView);this.saves++;}
   }
   class Plugin {
     registerView(type,create) {this.createView=create;this.type=type;}
     registerExtensions(extensions,type) {this.extensions=extensions;assert.equal(type,this.type);}
   }
-  class Setting {
-    setName() {return this;}
-    addToggle(callback) {callback({setValue(){return this;},onChange(){return this;}});return this;}
-  }
   class Table {
     constructor(container,settings) {
       this.settings=settings;
+      this.rootElement={id:''};
+      this.data=[];
       // Auto-column sizing invokes the renderer during table construction,
       // before Obsidian associates the TextFileView with a file.
       for (const value of [undefined,null,42,'**CSV**'])
         settings.renderer(this,element(),0,0,0,value,{});
     }
-    getPlugin() {return {};}
+    getPlugin(name) {
+      if(name!=='persistentState')return {};
+      return {
+        saveValue:(key,value)=>state.set(`${this.rootElement.id}:${key}`,value),
+        loadValue:(key,output)=>{output.value=state.get(`${this.rootElement.id}:${key}`)??false;},
+      };
+    }
+    getSourceDataArray() {return this.data.map(row=>row.slice());}
+    getColHeader() {return this.settings.colHeaders;}
+    loadData(data) {this.data=data.map(row=>row.slice());}
+    updateSettings(settings) {this.settings=settings;}
   }
-  const obsidian={Plugin,TextFileView,Setting,addIcon(){},MarkdownRenderer:{
+  const obsidian={Plugin,TextFileView,addIcon(){},MarkdownRenderer:{
     renderMarkdown(value,cell,path,component) {rendered.push({value,path,component});}
   }};
   const source=fs.readFileSync(require.resolve('../src/main.ts'),'utf8');
@@ -89,4 +99,58 @@ test('serialization preserves hidden source rows and CSV quoting after sorting/f
   const csv=view.getViewData();
   assert.deepEqual(require('papaparse').parse(csv).data,[['Nombre','Edad'],...rows]);
   assert.equal(view.getViewData(),csv,'repeated saves must not duplicate headers');
+});
+
+
+function paneMenu(view) {
+  const items=[];
+  const menu={addItem(callback){
+    const item={
+      setTitle(value){this.title=value;return this;},
+      setIcon(value){this.icon=value;return this;},
+      setChecked(value){this.checked=value;return this;},
+      setDisabled(value){this.disabled=value;return this;},
+      onClick(callback){this.click=callback;return this;},
+    };
+    callback(item);items.push(item);
+  }};
+  view.onPaneMenu(menu,'more-options');
+  assert.equal(menu.nativeSource,'more-options','keep inherited native pane options');
+  assert.equal(items.length,1);
+  return items[0];
+}
+
+test('pane menu toggles headers without changing CSV data or duplicating rows',async()=>{
+  const f=fixture(),view=f.plugin.csvViewCreator({});
+  assert.equal(paneMenu(view).disabled,true,'disable while no file is loaded');
+  view.file={path:'authors.csv'};
+  const csv='Name,Count\r\n"Beatriz, ""B""",2\r\nLuis,10';
+  await view.loadDataAsync(csv);
+  let item=paneMenu(view);
+  assert.equal(item.title,'First row contains headers');
+  assert.equal(item.checked,false);assert.equal(item.disabled,false);
+  item.click();
+  assert.equal(paneMenu(view).checked,true);
+  assert.equal(view.hot.data.length,2);
+  assert.equal(view.getViewData(),csv);
+  paneMenu(view).click();
+  assert.equal(paneMenu(view).checked,false);
+  assert.equal(view.hot.data.length,3);
+  assert.equal(view.getViewData(),csv);
+});
+
+test('pane menu restores the existing preference per file and acts on its own view',async()=>{
+  const f=fixture(),a=f.plugin.csvViewCreator({}),b=f.plugin.csvViewCreator({});
+  const csv='Name,Count\r\nAna,2';
+  a.file={path:'A.csv'};b.file={path:'B.csv'};
+  await a.loadDataAsync(csv);await b.loadDataAsync(csv);
+  const menuForA=paneMenu(a);
+  menuForA.click();
+  assert.equal(paneMenu(a).checked,true);
+  assert.equal(paneMenu(b).checked,false);
+  const reopened=f.plugin.csvViewCreator({});reopened.file={path:'A.csv'};
+  await reopened.loadDataAsync(csv);
+  assert.equal(paneMenu(reopened).checked,true);
+  assert.equal(reopened.hot.data.length,1);
+  assert.equal(reopened.getViewData(),csv);
 });

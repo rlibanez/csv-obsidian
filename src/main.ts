@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, addIcon, TextFileView, Setting, MarkdownRenderer, ToggleComponent } from 'obsidian';
+import { Plugin, WorkspaceLeaf, addIcon, TextFileView, Menu, MarkdownRenderer } from 'obsidian';
 import * as Papa from 'papaparse';
 import Handsontable from "handsontable";
 import './styles.scss'
@@ -36,9 +36,6 @@ export default class CsvPlugin extends Plugin {
 class CsvView extends TextFileView {
 
   parseResult: any;
-  headerToggle: ToggleComponent;
-  headers: string[] = null;
-  fileOptionsEl: HTMLElement;
   hot: Handsontable;
   hotSettings: Handsontable.GridSettings;
   hotExport: Handsontable.plugins.ExportFile;
@@ -66,16 +63,6 @@ class CsvView extends TextFileView {
     this.loadingBar.innerHTML = `<div class="progress-bar-message u-center-text">Loading CSV...</div><div class="progress-bar-indicator"><div class="progress-bar-line"></div><div class="progress-bar-subline" style="display: none;"></div><div class="progress-bar-subline mod-increase"></div><div class="progress-bar-subline mod-decrease"></div></div>`
     this.extContentEl.appendChild(this.loadingBar);
 
-    this.fileOptionsEl = document.createElement('div');
-    this.fileOptionsEl.classList.add('csv-controls');
-    this.extContentEl.appendChild(this.fileOptionsEl);
-
-    new Setting(this.fileOptionsEl)
-      .setName('First row contains headers')
-      .addToggle(toggle => {
-        this.headerToggle = toggle;
-        toggle.setValue(false).onChange(this.toggleHeaders)
-      })
     const tableContainer = document.createElement('div');
     tableContainer.classList.add('csv-table-wrapper');
     this.extContentEl.appendChild(tableContainer);
@@ -109,7 +96,7 @@ class CsvView extends TextFileView {
       columnHeaderHeight: 34,
       rowHeaderWidth: 44,
       colWidths: 160,
-      stretchH: 'all',
+      stretchH: 'none',
       renderer: this.markdownCellRenderer,
       // The old MarkdownView cell editor relied on removed Obsidian internals.
       editor: 'text',
@@ -137,6 +124,16 @@ class CsvView extends TextFileView {
     this.hotState = this.hot.getPlugin('persistentState');
     this.hotFilters = this.hot.getPlugin('filters');
 
+  }
+
+  onPaneMenu(menu: Menu, source: string): void {
+    super.onPaneMenu(menu, source);
+    menu.addItem(item => item
+      .setTitle('First row contains headers')
+      .setIcon('table')
+      .setChecked(this.hotSettings.colHeaders !== true)
+      .setDisabled(!this.file || !this.parseResult)
+      .onClick(() => this.toggleHeaders(this.hotSettings.colHeaders === true)));
   }
 
   hotChange = (changes: Handsontable.CellChange[], source: Handsontable.ChangeSource) => {
@@ -226,7 +223,6 @@ class CsvView extends TextFileView {
           // load the persistent setting for headings
           let hasHeadings = { value: false };
           this.hotState.loadValue('hasHeadings', hasHeadings);
-          this.headerToggle.setValue(hasHeadings.value);
 
           // toggle the headers on or off based on the loaded value
           this.toggleHeaders(hasHeadings.value)

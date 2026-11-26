@@ -42,14 +42,17 @@ tweaks, you can do the following:
 - Use Node.js 22 or newer.
 - `npm ci --ignore-scripts` to install the exact dependencies from `package-lock.json`
 - `npm run typecheck` and `npm test` to check types and run regression tests.
-- `npm run build` to generate `main.js` and `styles.css` in the project root.
+- `npm run build` to generate distribution files (`main.js` and `styles.css`)
+  without source maps in the project root.
 - `npm audit` to check the dependency tree for known vulnerabilities.
 - Copy `manifest.json`, `main.js` and `styles.css` to a subfolder of your plugins
 folder (e.g, `<vault>/.obsidian/plugins/<plugin-name>/`)
 - Reload obsidian to see changes
 
 Alternately, you can clone the repo directly into your plugins folder and once
-dependencies are installed use `npm run dev` to start compilation in watch mode.  
+dependencies are installed use `npm run dev` to start compilation in watch mode.
+Development builds embed source maps in `main.js`, including TypeScript sources
+for debugging. Run `npm run build` again before distributing the plugin.
 You may have to reload obsidian (`ctrl+R`) to see changes.
 
 ## Pricing

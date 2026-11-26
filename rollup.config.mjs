@@ -4,6 +4,8 @@ import commonjs from '@rollup/plugin-commonjs';
 import * as sass from 'sass';
 import { fileURLToPath } from 'node:url';
 
+const development = process.env.ROLLUP_WATCH === 'true';
+
 function styles() {
   return {
     name: 'csv-styles',
@@ -23,10 +25,15 @@ export default {
   input: 'src/main.ts',
   output: {
     dir: '.',
-    sourcemap: 'inline',
+    sourcemap: development ? 'inline' : false,
     format: 'cjs',
     exports: 'default',
   },
   external: ['obsidian'],
-  plugins: [typescript(), nodeResolve({ browser: true }), commonjs(), styles()],
+  plugins: [
+    typescript({ sourceMap: development, inlineSources: development }),
+    nodeResolve({ browser: true }),
+    commonjs(),
+    styles(),
+  ],
 };
