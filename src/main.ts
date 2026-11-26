@@ -1,7 +1,6 @@
 import { Plugin, WorkspaceLeaf, addIcon, TextFileView, Setting, MarkdownRenderer, ToggleComponent } from 'obsidian';
 import * as Papa from 'papaparse';
 import Handsontable from "handsontable";
-import 'handsontable/dist/handsontable.full.min.css';
 import './styles.scss'
 
 export default class CsvPlugin extends Plugin {
@@ -57,9 +56,10 @@ class CsvView extends TextFileView {
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
     this.onResize = () => {
-      //@ts-ignore
-      this.hot.view.wt.wtOverlays.updateMainScrollableElements();
-      this.hot.render();
+      if (this.hot) {
+        this.hot.refreshDimensions();
+        this.hot.render();
+      }
     }
     this.loadingBar = document.createElement('div');
     this.loadingBar.addClass("progress-bar");
@@ -71,7 +71,7 @@ class CsvView extends TextFileView {
     this.extContentEl.appendChild(this.fileOptionsEl);
 
     new Setting(this.fileOptionsEl)
-      .setName('File Includes Headers')
+      .setName('First row contains headers')
       .addToggle(toggle => {
         this.headerToggle = toggle;
         toggle.setValue(false).onChange(this.toggleHeaders)
@@ -83,6 +83,14 @@ class CsvView extends TextFileView {
     const hotContainer = document.createElement('div');
     tableContainer.appendChild(hotContainer);
 
+
+    // A separate portal keeps popup menus unclipped and scoped to this CSV view.
+    const menuContainer = document.createElement('div');
+    menuContainer.classList.add('csv-editor-menus');
+    document.body.appendChild(menuContainer);
+    this.register(() => menuContainer.remove());
+    // Handsontable 8 supports uiContainer, but its bundled types omit it.
+    const menuOptions = { uiContainer: menuContainer } as unknown as Handsontable.contextMenu.Settings;
 
     this.hotSettings = {
       afterChange: this.hotChange,
@@ -98,15 +106,20 @@ class CsvView extends TextFileView {
       rowHeaders: true,
       autoColumnSize: true,
       autoRowSize: true,
+      rowHeights: 32,
+      columnHeaderHeight: 34,
+      rowHeaderWidth: 44,
+      colWidths: 160,
+      stretchH: 'all',
       renderer: this.markdownCellRenderer,
       // The old MarkdownView cell editor relied on removed Obsidian internals.
       editor: 'text',
       className: 'csv-table',
-      contextMenu: true,
+      contextMenu: menuOptions,
       currentRowClassName: 'active-row',
       currentColClassName: 'active-col',
       columnSorting: true,
-      dropdownMenu: true,
+      dropdownMenu: menuOptions,
       filters: true,
       manualColumnFreeze: true,
       manualColumnMove: false,  // moving columns causes too many headaches for now
@@ -118,7 +131,6 @@ class CsvView extends TextFileView {
       search: true, // TODO:290 Hijack the search ui from markdown views,
       height: '100%',
       width: '100%',
-      // stretchH: 'last'
     }
     this.hot = new Handsontable(hotContainer, this.hotSettings);
     this.hotExport = this.hot.getPlugin('exportFile');

@@ -1,142 +1,160 @@
-.workspace-leaf-content[data-type="csv"] .view-content{
-  padding:0;
+@use '../node_modules/handsontable/dist/handsontable.full.min.css';
+
+/* Geometry remains owned by Handsontable; appearance follows the active theme. */
+.workspace-leaf-content[data-type="csv"] .view-content {
+  padding: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  background: var(--background-primary);
+  color: var(--text-normal);
 
-  .progress-bar {
-    z-index: 500;
-    padding: 40px;
-  }
+  .progress-bar { padding: 16px; color: var(--text-muted); }
 
-  .htMarkdownEditor {
-    position: absolute;
-    width: auto;
+  .csv-controls {
+    flex: none;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
     background: var(--background-primary);
 
-    .markdown-source-view {
-      padding:0;
-      .CodeMirror-scroll {
-        padding:0;
-        margin:0;
-        padding-bottom:8px;
-      }
-      .CodeMirror-sizer {
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none;
-      }
-      .CodeMirror-lines{
-        padding: 0;
-      }
-      .CodeMirror-code{
-        padding:0;
-      }
-    }
+    .setting-item { padding: 0; border: 0; min-height: 32px; gap: 16px; }
+    .setting-item-info { flex: initial; margin: 0; }
+    .setting-item-name { font-size: var(--font-ui-small); font-weight: var(--font-normal); }
+    .setting-item-control { flex: initial; padding: 0; }
   }
-  
-  .csv-controls {
-    margin: 20px 8px 8px 8px;
-    padding: 8px;
-    background-color: var(--background-primary-alt);
-    min-width: 140px;
-    max-width: 240px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    flex-grow: 0;
-    overflow: hidden;
-  }
+
   .csv-table-wrapper {
     position: relative;
-    flex-grow: 1;
-    width:100%;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  td>p:first-child { margin-top: 0; }
-  td>p:last-child { margin-bottom: 0; }
-  
-  .handsontable.csv-table{
-    tbody tr {
-      background-color: var(--background-primary);
-    }
-    tbody tr:nth-child(2n) {
-      background-color: var(--background-primary-alt);
-    }
-    thead tr,
-    tbody th {
-      background-color: var(--background-secondary);
-    }
-    tbody th.ht__highlight,
-    thead th.ht__highlight {
-      background-color: var(--background-secondary-alt);
-    }
-    tbody th.ht__active_highlight,
-    thead th.ht__active_highlight {
-      background-color: var(--interactive-accent);
-      color:var(--text-on-accent)
-    }
+  .handsontable {
+    font-family: var(--font-interface);
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
 
-    span.colHeader.columnSorting.descending::before {
-      background-image: none;
-      font-size: 0.75em;
-      content: "↓";
-    }
-    span.colHeader.columnSorting.ascending::before {
-      background-image: none;
-      font-size: 0.75em;
-      content: "↑";
-    }
-
-    th,
-    td {
-      background-color: transparent;
+    .htCore { border-collapse: separate; border-spacing: 0; margin: 0; }
+    th, td {
       border-color: var(--background-modifier-border);
       color: var(--text-normal);
+      line-height: 22px;
+      padding: 4px 10px;
+      vertical-align: middle;
+      font-size: inherit;
     }
-    
-    &.htRowHeaders thead tr th:nth-child(2),
-    tr:first-child th,
-    tr:first-child td,
-    th:first-child,
-    th:nth-child(2),
-    td:first-of-type {
-      border-color: var(--background-modifier-border);
+    td { background: var(--background-primary); }
+    tbody tr:nth-child(even) td { background: var(--background-primary-alt); }
+    th {
+      background: var(--background-secondary);
+      color: var(--text-muted);
+      font-weight: var(--font-medium);
     }
+    th.ht__highlight { background: var(--background-modifier-hover); color: var(--text-normal); }
+    th.ht__active_highlight { background: var(--interactive-accent); color: var(--text-on-accent); }
+    td.htDimmed { color: var(--text-muted); }
+    td p { margin: 0; line-height: inherit; }
+    td > :first-child { margin-top: 0; }
+    td > :last-child { margin-bottom: 0; }
+    td a { color: var(--link-color); }
+    .wtBorder { background: var(--interactive-accent) !important; }
+    td[class*="area"]::before { background: var(--interactive-accent) !important; }
 
-    .wtBorder,
-    td.area:before,
-    td.area-1:before,
-    td.area-2:before,
-    td.area-3:before,
-    td.area-4:before,
-    td.area-5:before,
-    td.area-6:before,
-    td.area-7:before {
-      background-color: var(--interactive-accent) !important;
+    button.changeType {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: 20px;
+      min-width: 20px;
+      height: 20px;
+      min-height: 0;
+      margin: 1px 0 0 6px;
+      padding: 0;
+      line-height: 1;
+      border: 0;
+      border-radius: var(--radius-s);
+      box-shadow: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      &::before { content: '⌄'; font-size: 15px; }
+      &:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+      &:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
     }
+    .htFiltersActive button.changeType { color: var(--interactive-accent); background: var(--background-modifier-hover); }
+    span.colHeader.columnSorting::before { background-image: none; color: var(--text-accent); font-size: 12px; }
+    span.colHeader.columnSorting.ascending::before { content: '↑'; }
+    span.colHeader.columnSorting.descending::before { content: '↓'; }
+  }
+
+  textarea.handsontableInput {
+    font-family: var(--font-interface);
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    background: var(--background-primary);
+    border: 0;
+    border-radius: 0;
+    box-shadow: inset 0 0 0 2px var(--interactive-accent);
+    padding: 4px 10px;
+    line-height: 22px;
   }
 }
 
-.htMenu.handsontable {
+/* These menus are portalled outside .view-content. The class is instance-scoped. */
+.csv-editor-menus .htMenu {
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-small);
 
-  .ht_master table td.htCustomMenuRenderer,
-  tbody tr {
-    background-color: var(--background-primary);
-  }
-
-  th,
-  td,
-  table tbody tr td {
-    background-color: transparent;
-    border-color: var(--background-modifier-border);
+  .handsontable, table.htCore, .ht_master table td.htCustomMenuRenderer,
+  table tbody tr td, .htUIMultipleSelect .handsontable td {
+    background: var(--background-primary);
     color: var(--text-normal);
-  }
-  
-  table tbody tr td.htDisabled {
-    color: var(--text-faint);
-  }
-  
-  table tbody tr td.htSeparator,
-  .ht_master table.htCore {
+    font-family: var(--font-interface);
+    font-size: var(--font-ui-small);
     border-color: var(--background-modifier-border);
   }
+  table tbody tr td.current, table tbody tr td:hover {
+    background: var(--background-modifier-hover);
+  }
+  table tbody tr td.htDisabled, table tbody tr td.htDisabled:hover {
+    color: var(--text-faint);
+    background: var(--background-primary);
+  }
+  table tbody tr td.htSeparator,
+  .htFiltersMenuCondition.border, .htFiltersMenuValue {
+    border-color: var(--background-modifier-border) !important;
+  }
+  .htUIInput input, .htUISelect .htUISelectCaption {
+    background: var(--background-modifier-form-field);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border);
+    font-family: var(--font-interface);
+    font-size: var(--font-ui-small);
+  }
+  .htUISelectAll a, .htUIClearAll a { color: var(--link-color); }
+  .htUISelectCaption:hover { background: var(--background-modifier-hover); }
+  .htUIInput.htUIButton input:hover { background: var(--interactive-hover); }
+  .htUIInput.htUIButtonOK input:hover { background: var(--interactive-accent-hover); }
+  .htUISelect .htUISelectDropdown { color: var(--text-muted); }
+  .htUIInput.htUIButton input {
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border);
+    border-radius: var(--button-radius);
+    font-family: var(--font-interface);
+    font-size: var(--font-ui-small);
+  }
+  .htUIInput.htUIButtonOK input { background: var(--interactive-accent); color: var(--text-on-accent); }
 }

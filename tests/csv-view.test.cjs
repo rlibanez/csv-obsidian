@@ -9,6 +9,7 @@ function fixture() {
   const element = () => ({innerHTML:'',classList:{add(){}},addClass(){},appendChild(){}});
   class TextFileView {
     constructor(leaf) {this.leaf=leaf;this.contentEl=element();this.saves=0;}
+    register() {}
     requestSave() {assert.ok(this instanceof TextFileView);this.saves++;}
   }
   class Plugin {
@@ -36,7 +37,7 @@ function fixture() {
   const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
   const module={exports:{}};
   vm.runInNewContext(compiled,{
-    module,exports:module.exports,document:{createElement:element},
+    module,exports:module.exports,document:{createElement:element,body:element()},
     require(name) {
       if(name==='obsidian')return obsidian;
       if(name==='handsontable')return {default:Table};
